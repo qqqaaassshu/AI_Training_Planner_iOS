@@ -12,3 +12,5 @@ App/iPhone/Info.plist
 
 App/Watch/Info.plist
 App/Watch/Watch.entitlements
+App/WatchWidgets/Info.plist
+App/WatchWidgets/WatchWidgets.entitlements

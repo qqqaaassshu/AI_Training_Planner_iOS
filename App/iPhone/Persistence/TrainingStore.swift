@@ -17,6 +17,10 @@ final class TrainingStore {
     /// 数据变化后调用（发给手表）
     @ObservationIgnored var onChange: (() -> Void)?
     @ObservationIgnored private let context: ModelContext
+    @ObservationIgnored let keychain: KeychainStore
+    @ObservationIgnored private let aiClient: AIClient
+    /// 正在运行的 API 分析
+    private(set) var analyzing = false
     @ObservationIgnored private let encoder: JSONEncoder = {
         let e = JSONEncoder()
         e.outputFormatting = [.sortedKeys]
@@ -24,8 +28,10 @@ final class TrainingStore {
     }()
     @ObservationIgnored private let decoder = JSONDecoder()
 
-    init(context: ModelContext) {
+    init(context: ModelContext, keychain: KeychainStore = KeychainStore(), aiClient: AIClient = AIClient()) {
         self.context = context
+        self.keychain = keychain
+        self.aiClient = aiClient
         load()
     }
 
@@ -75,6 +81,77 @@ final class TrainingStore {
     func setDailyFatigue(_ score: Int) {
         mutate { $0.setDailyFatigue(score, date: today) }
     }
+
+    // MARK: AI 分析
+
+    func apiKey(for serviceId: String) -> String? { keychain.get(serviceId) }
+
+    func setAPIKey(_ key: String?, for serviceId: String) {
+        keychain.set(key?.trimmingCharacters(in: .whitespacesAndNewlines), for: serviceId)
+    }
+
+    var activeService: AIServiceConfig? { state.aiSettings.activeService }
+
+    var activeServiceReady: Bool {
+        guard let s = activeService else { return false }
+        return s.isReady(apiKey: apiKey(for: s.id))
+    }
+
+    func analysisInput(kind: AnalysisKind, includeNotes: Bool, userNote: String?) -> AnalysisInput {
+        buildAnalysisInput(kind: kind, plan: currentPlan, versions: state.planVersions, records: state.records,
+                           dailyWellness: state.dailyWellness, today: today, includeNotes: includeNotes,
+                           profile: state.profile, profileHistory: state.profileHistory, userNote: userNote)
+    }
+
+    /// 通过 API 运行一次分析并保存
+    @discardableResult
+    func runAnalysis(kind: AnalysisKind, includeNotes: Bool, userNote: String?) async throws -> AIAnalysis {
+        guard let service = activeService else { throw AIProviderError("请先在 AI 设置里添加服务", retryable: false) }
+        let input = analysisInput(kind: kind, includeNotes: includeNotes, userNote: userNote)
+        let planId = currentPlan?.id ?? ""
+        let key = apiKey(for: service.id) ?? ""
+        analyzing = true
+        defer { analyzing = false }
+        let analysis = try await aiClient.runAnalysis(input: input, planVersionId: planId, service: service, apiKey: key)
+        mutate { $0.addAnalysis(analysis) }
+        return analysis
+    }
+
+    /// 手动粘贴回来的回复
+    func importManualReply(_ text: String, kind: AnalysisKind, includeNotes: Bool, userNote: String?) -> ValidationResult<AIAnalysis> {
+        switch parseAnalysisReply(text) {
+        case .failure(let errors):
+            return .failure(errors)
+        case .ok(let output):
+            let input = analysisInput(kind: kind, includeNotes: includeNotes, userNote: userNote)
+            let a = createAnalysis(output, kind: kind, channel: .manualImport, planVersionId: currentPlan?.id ?? "",
+                                   range: input.range, userNote: input.userNote)
+            mutate { $0.addAnalysis(a) }
+            return .ok(a)
+        }
+    }
+
+    /// 每周自动复盘：条件满足时静默运行一次，失败时不打扰用户（可在 AI 页手动重试）
+    func runWeeklyReviewIfDue() async {
+        guard !analyzing, let s = activeService, isWeeklyReviewDue(state: state, apiKey: apiKey(for: s.id), today: today) else { return }
+        _ = try? await runAnalysis(kind: .weeklyReview, includeNotes: false, userNote: nil)
+    }
+
+    func acceptAnalysis(id: String) { mutate { $0.acceptAnalysis(id: id) } }
+    func rejectAnalysis(id: String) { mutate { $0.rejectAnalysis(id: id) } }
+    func deleteAnalysis(id: String) { mutate { $0.analyses.removeAll { $0.id == id } } }
+
+    // MARK: AI 设置与个人档案
+
+    func updateAISettings(_ change: (inout AISettings) -> Void) { mutate { change(&$0.aiSettings) } }
+    func upsertService(_ s: AIServiceConfig) { mutate { $0.upsertService(s) } }
+
+    func removeService(id: String) {
+        mutate { $0.removeService(id: id) }
+        setAPIKey(nil, for: id)
+    }
+
+    func saveProfile(_ p: UserProfile) { mutate { $0.saveProfile(p) } }
 
     // MARK: 草稿
 

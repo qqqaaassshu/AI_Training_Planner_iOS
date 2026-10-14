@@ -37,6 +37,7 @@ final class WatchAppModel {
 
     func launch() async {
         connectivity.activate()
+        store.publishToWidgets()
         await reminders.requestAuthorization()
         await workout.requestAuthorization()
         await becameActive()
@@ -83,6 +84,21 @@ final class WatchAppModel {
         alarm.stop()
         if let a = store.data.alarm { snooze(taskId: a.taskId, date: a.date) }
         store.setAlarm(nil)
+    }
+
+    // MARK: 通知操作
+
+    func handleNotificationAction(_ action: ReminderAction, taskId: String, date: LocalDate) {
+        switch action {
+        case .complete:
+            save(RecordDraft(taskId: taskId, status: .completed), date: date)
+        case .snooze:
+            snooze(taskId: taskId, date: date)
+        case .start:
+            if let task = store.plan?.tasks.first(where: { $0.id == taskId }), store.data.workout == nil {
+                startWorkout(task, date: date)
+            }
+        }
     }
 
     // MARK: 任务

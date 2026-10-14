@@ -55,6 +55,8 @@ targets:
     dependencies:
       - package: TrainingCore
       - sdk: HealthKit.framework
+      # 表盘复杂功能随手表 App 一起安装
+      - target: AITrainingPlannerWatchWidgets
     info:
       path: App/Watch/Info.plist
       properties:
@@ -75,6 +77,8 @@ targets:
         com.apple.developer.healthkit: true
         com.apple.developer.healthkit.access: []
         com.apple.developer.usernotifications.time-sensitive: true
+        com.apple.security.application-groups:
+          - group.com.example.aitrainingplanner
     settings:
       base:
         # 真机安装前改成 <iPhone App 的标识>.watchkitapp
@@ -83,6 +87,35 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         SKIP_INSTALL: YES
         # HealthKit、WatchKit 的回调还没有完整的并发标注，手表 App 先用 Swift 5 语言模式
+        SWIFT_VERSION: "5.0"
+  AITrainingPlannerWatchWidgets:
+    type: app-extension
+    platform: watchOS
+    sources:
+      - App/WatchWidgets
+      - App/Watch/Services/WidgetShared.swift
+    dependencies:
+      - package: TrainingCore
+      - sdk: WidgetKit.framework
+      - sdk: SwiftUI.framework
+    info:
+      path: App/WatchWidgets/Info.plist
+      properties:
+        CFBundleDisplayName: 训练计划
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    entitlements:
+      path: App/WatchWidgets/WatchWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.com.example.aitrainingplanner
+    settings:
+      base:
+        # 真机安装前改成 <手表 App 的标识>.widgets
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.aitrainingplanner.watchkitapp.widgets
+        SKIP_INSTALL: YES
         SWIFT_VERSION: "5.0"
   AITrainingPlannerWatchTests:
     type: bundle.unit-test

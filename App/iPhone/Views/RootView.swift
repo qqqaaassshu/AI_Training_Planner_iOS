@@ -14,9 +14,14 @@ struct RootView: View {
                 .tabItem { Label("记录", systemImage: "list.bullet.rectangle") }
             PlanView()
                 .tabItem { Label("计划", systemImage: "doc.text") }
+            AIView()
+                .tabItem { Label("AI", systemImage: "sparkles") }
         }
         .onChange(of: scenePhase) { _, phase in
-            if phase == .active { store.refreshToday() }
+            if phase == .active {
+                store.refreshToday()
+                Task { await store.runWeeklyReviewIfDue() }
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged)) { _ in
             store.refreshToday()

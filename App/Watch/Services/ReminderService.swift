@@ -16,6 +16,21 @@ final class ReminderService {
     private(set) var pendingCount = 0
     private(set) var lastSchedule: ReminderSchedule?
 
+    /// 通知上的操作：训练“开始训练 / 稍后”，习惯“完成 / 稍后”
+    static func registerCategories() {
+        let categories = ReminderCategory.allCases.map { c in
+            UNNotificationCategory(
+                identifier: c.rawValue,
+                actions: c.actions.map { a in
+                    UNNotificationAction(identifier: a.rawValue, title: a.title, options: a.opensApp ? [.foreground] : [])
+                },
+                intentIdentifiers: [],
+                options: []
+            )
+        }
+        UNUserNotificationCenter.current().setNotificationCategories(Set(categories))
+    }
+
     func requestAuthorization() async {
         _ = try? await center.requestAuthorization(options: [.alert, .sound, .badge])
         await refreshSettings()
@@ -52,12 +67,13 @@ final class ReminderService {
         content.body = r.body
         content.sound = .default
         content.threadIdentifier = r.taskId
+        content.categoryIdentifier = r.category.rawValue
         // 时效性通知可穿透普通专注模式（需开启 Time Sensitive Notifications 能力，且用户允许）
         content.interruptionLevel = .timeSensitive
         content.userInfo = [
             ReminderRequest.fingerprintKey: r.fingerprint,
-            "task_id": r.taskId,
-            "date": r.date.description,
+            ReminderRequest.taskIdKey: r.taskId,
+            ReminderRequest.dateKey: r.date.description,
         ]
         let components = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute, .second], from: r.fireDate)
         let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)

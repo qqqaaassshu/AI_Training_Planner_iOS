@@ -58,6 +58,8 @@ struct WatchStoreTests {
         let request = ReminderService.request(for: first)
         #expect(request.identifier == first.id)
         #expect(request.content.interruptionLevel == .timeSensitive)
+        #expect(request.content.categoryIdentifier == first.category.rawValue)
+        #expect(request.content.userInfo[ReminderRequest.taskIdKey] as? String == first.taskId)
         #expect(request.content.userInfo[ReminderRequest.fingerprintKey] as? String == first.fingerprint)
         let trigger = try #require(request.trigger as? UNCalendarNotificationTrigger)
         #expect(first.fireDate > Date())

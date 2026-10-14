@@ -69,6 +69,9 @@ jobs:
           WATCH=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Debug-iphonesimulator/AITrainingPlanner.app/Watch/*.app" -maxdepth 8 -type d | head -1)
           test -n "$WATCH" || { echo "iPhone App 里没有 Watch/ 目录"; exit 1; }
           echo "已嵌入：$WATCH"
+          WIDGET=$(find "$WATCH/PlugIns" -name "*.appex" -maxdepth 1 -type d | head -1)
+          test -n "$WIDGET" || { echo "手表 App 里没有表盘复杂功能扩展"; exit 1; }
+          echo "已嵌入：$WIDGET"
 
   watch:
     name: Watch App（watchOS 模拟器）

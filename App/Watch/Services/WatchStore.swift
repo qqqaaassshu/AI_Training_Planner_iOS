@@ -1,6 +1,7 @@
 import Foundation
 import Observation
 import TrainingCore
+import WidgetKit
 
 /// 手表上保存的数据（JSON 文件）：从手机同步来的当前计划与近期记录、稍后提醒、进行中的训练、已安排的强提醒
 struct WatchData: Codable, Equatable {
@@ -120,8 +121,18 @@ final class WatchStore {
         var next = data
         change(&next)
         guard next != data else { return }
+        let planOrRecordsChanged = next.state != data.state
         data = next
         save()
+        if planOrRecordsChanged { publishToWidgets() }
+    }
+
+    /// 表盘复杂功能读取的数据：当前计划与记录（App Group 共享目录）
+    func publishToWidgets() {
+        guard let url = WidgetShared.snapshotURL,
+              let encoded = try? WatchSnapshot(plan: plan, records: records).encoded() else { return }
+        try? encoded.write(to: url, options: .atomic)
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func save() {

@@ -9,3 +9,6 @@ Packages/*/Package.resolved
 # 由 XcodeGen 生成（project.yml）
 *.xcodeproj/
 App/iPhone/Info.plist
+
+App/Watch/Info.plist
+App/Watch/Watch.entitlements

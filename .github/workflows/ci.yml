@@ -40,7 +40,7 @@ jobs:
         run: xcodebuild build -scheme TrainingCore -destination 'generic/platform=watchOS Simulator' -quiet
 
   iphone:
-    name: iPhone App（Xcode，iOS 模拟器）
+    name: iPhone App（含手表 App，iOS 模拟器）
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v5
@@ -51,15 +51,7 @@ jobs:
           xcodegen generate
       - name: 选择 iOS 模拟器
         run: |
-          UDID=$(xcrun simctl list devices available -j | python3 -c '
-          import json, sys
-          devices = json.load(sys.stdin)["devices"]
-          for runtime in sorted(devices, reverse=True):
-              if ".iOS-" in runtime:
-                  for d in devices[runtime]:
-                      if d["name"].startswith("iPhone"):
-                          print(d["udid"]); sys.exit()
-          ')
+          UDID=$(xcrun simctl list devices available -j | python3 scripts/pick-simulator.py iOS iPhone)
           echo "使用模拟器 $UDID"
           echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
       - name: 编译并运行 App 测试
@@ -71,4 +63,29 @@ jobs:
         if: always()
         run: |
           xcrun xcresulttool get test-results summary --path AppTests.xcresult --compact > summary.json
+          python3 scripts/xcresult-summary.py summary.json
+
+  watch:
+    name: Watch App（watchOS 模拟器）
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - name: 生成 Xcode 工程
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: 选择 watchOS 模拟器
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 scripts/pick-simulator.py watchOS "Apple Watch")
+          echo "使用模拟器 $UDID"
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+      - name: 编译并运行手表 App 测试
+        run: |
+          set -o pipefail
+          xcodebuild test -project AITrainingPlanner.xcodeproj -scheme AITrainingPlannerWatch \
+            -destination "id=$SIM_UDID" CODE_SIGNING_ALLOWED=NO -quiet -resultBundlePath WatchTests.xcresult
+      - name: 测试结果
+        if: always()
+        run: |
+          xcrun xcresulttool get test-results summary --path WatchTests.xcresult --compact > summary.json
           python3 scripts/xcresult-summary.py summary.json

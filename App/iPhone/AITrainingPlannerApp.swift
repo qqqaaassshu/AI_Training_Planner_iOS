@@ -5,6 +5,7 @@ import SwiftUI
 struct AITrainingPlannerApp: App {
     private let container: ModelContainer
     @State private var store: TrainingStore
+    private let connectivity: PhoneConnectivity
 
     init() {
         do {
@@ -12,7 +13,12 @@ struct AITrainingPlannerApp: App {
         } catch {
             fatalError("无法打开数据库：\(error)")
         }
-        _store = State(initialValue: TrainingStore(context: container.mainContext))
+        let store = TrainingStore(context: container.mainContext)
+        let connectivity = PhoneConnectivity(store: store)
+        store.onChange = { [weak connectivity] in connectivity?.push() }
+        connectivity.activate()
+        _store = State(initialValue: store)
+        self.connectivity = connectivity
     }
 
     var body: some Scene {

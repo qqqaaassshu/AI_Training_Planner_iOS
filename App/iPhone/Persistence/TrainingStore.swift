@@ -14,6 +14,8 @@ final class TrainingStore {
     /// 最近一次读写失败的原因，界面上提示
     var lastError: String?
 
+    /// 数据变化后调用（发给手表）
+    @ObservationIgnored var onChange: (() -> Void)?
     @ObservationIgnored private let context: ModelContext
     @ObservationIgnored private let encoder: JSONEncoder = {
         let e = JSONEncoder()
@@ -34,7 +36,15 @@ final class TrainingStore {
 
     func refreshToday(now: Date = Date()) {
         let t = LocalDate.today(now: now)
-        if t != today { today = t }
+        if t != today {
+            today = t
+            onChange?()
+        }
+    }
+
+    /// 手表发来的记录：较新的覆盖较旧的
+    func mergeFromWatch(_ record: ExecutionRecord) {
+        mutate { $0.merge(record) }
     }
 
     // MARK: 修改
@@ -97,12 +107,14 @@ final class TrainingStore {
     private func mutate(_ change: (inout PersistedState) -> Void) {
         var next = state
         change(&next)
+        guard next != state else { return }
         state = next
         do {
             try persist(next)
         } catch {
             lastError = "保存失败：\(error.localizedDescription)"
         }
+        onChange?()
     }
 
     private func load() {

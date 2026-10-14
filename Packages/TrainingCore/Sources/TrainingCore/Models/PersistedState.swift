@@ -2,7 +2,7 @@ import Foundation
 
 /// 网页原型保存在 localStorage 里的完整状态（atp:state:v2）。
 /// iOS 端用 SwiftData 存储，这里只用于从网页原型导入数据。
-public struct PersistedState: Codable, Sendable {
+public struct PersistedState: Codable, Hashable, Sendable {
     public var schemaVersion: String
     public var planVersions: [PlanVersion]
     public var currentPlanId: String?

@@ -11,18 +11,19 @@
 | `project.yml` | Xcode 工程配置（XcodeGen） |
 | `App/iPhone` | iPhone App（SwiftUI + SwiftData） |
 | `App/iPhoneTests` | App 测试（SwiftData 读写） |
+| `App/Watch` | Watch App（随 iPhone App 一起安装） |
+| `App/WatchTests` | 手表 App 测试 |
 | `Packages/TrainingCore` | iPhone 与 Watch 共用的核心逻辑（Swift Package，无 UI 依赖，Linux 上可测试） |
 | `scripts/install-swift-linux.sh` | 在 Linux 云端会话安装 Swift 工具链 |
 
-Watch App 在第 3 阶段加入。
 
 ## 阶段
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 | `TrainingCore`：模型、日期、统计、版本对比、自然语言解析、校验、AI 提示词与服务适配、提醒排程逻辑，连同测试 | ✅ |
-| 2 | iPhone：导入计划、今日任务、逐个动作打勾、历史；SwiftData | 进行中 |
-| 3 | Watch：逐组训练、休息倒计时、表冠、HKWorkoutSession、WatchConnectivity、三层提醒 | |
+| 2 | iPhone：导入计划、今日任务、逐个动作打勾、历史；SwiftData | 代码完成，待在 Mac 上试用 |
+| 3 | Watch：逐组训练、休息倒计时、表冠、HKWorkoutSession、WatchConnectivity、三层提醒 | 代码完成，待真机验证 |
 | 4 | AI 分析、个人档案、通知操作（完成/稍后）、表盘复杂功能 | |
 
 ## 在 Mac 上打开 iPhone App
@@ -36,7 +37,8 @@ open AITrainingPlanner.xcodeproj
 ```
 
 - 模拟器：选择任意 iPhone 模拟器，点运行即可。
-- 真机：在 Signing & Capabilities 里选择你的开发团队，并把 Bundle Identifier 改成自己的（例如 `com.你的名字.aitrainingplanner`）。
+- 真机：在 iPhone 与 Watch 两个 target 的 Signing & Capabilities 里选择你的开发团队，并把 Bundle Identifier 改成自己的：iPhone 为 `com.你的名字.aitrainingplanner`，Watch 为 `com.你的名字.aitrainingplanner.watchkitapp`，同时把 `project.yml` 里 `WKCompanionAppBundleIdentifier` 改成 iPhone 的标识。
+- 手表 App 用到 HealthKit 与时效性通知（Time Sensitive Notifications）能力；个人免费账号可能无法签名其中某些能力，遇到签名错误时把报错发给我。
 
 Xcode 工程由 `project.yml` 生成，不提交到仓库；增删文件后重新运行 `xcodegen generate`。
 
@@ -49,6 +51,27 @@ Xcode 工程由 `project.yml` 生成，不提交到仓库；增删文件后重�
 | 计划 | 当前计划概要与任务；导入（粘贴 JSON 或自然语言、从文件导入、载入示例），导入前预览错误、未识别的行和相对当前版本的变化；版本历史，可查看每版变化并切换当前版本 |
 
 数据存储：SwiftData 里每条数据保存为 TrainingCore 模型的 JSON（与网页原型、AI、手表同步的格式相同），逻辑都在 TrainingCore（`Session/`）。
+
+### Watch App（第 3 阶段）
+
+| 功能 | 内容 |
+|---|---|
+| 今日 | 当天任务；点训练开始逐组训练，习惯可完成、稍后 10 分钟、跳过（选原因） |
+| 逐组训练 | 显示动作与第几组；表冠或 ± 调整次数/时长；完成本组 → 休息倒计时，结束时震动；中途结束时已完成的组保存为部分完成；训练进度在 App 被系统结束后可恢复 |
+| HealthKit | 训练中用 `HKWorkoutSession` 保持后台运行，结束后保存一次体能训练到健康 App，记录里带 `health_workout_id` |
+| 同步 | iPhone 在计划或记录变化时发送当前计划与最近 7 天记录（`updateApplicationContext`）；手表的记录排队发回（`transferUserInfo`），同一任务同一天以较新的为准 |
+| 提醒状态 | 通知与时效性通知是否开启、待发提醒数、下一次强提醒；列出不会震动的情况 |
+
+三层提醒（`docs/ios-plan.md` 的硬性要求）：
+
+1. **本地通知（主力）**：手表按 `ReminderScheduler` 的结果增量更新待发通知（`interruptionLevel = .timeSensitive`），并按 `refreshBy` 安排后台刷新续排；打开 App、收到手机同步、完成任务后也会重排。iPhone 不安排提醒。
+2. **强提醒**：下一次训练用智能闹钟会话（`WKExtendedRuntimeSession.start(at:)`），到点反复震动，直到点“开始”或“稍后 10 分钟”。只能在前台安排，所以每次打开 App 时重排；到点时如果任务已完成就不响。
+3. **训练中**：组间休息结束时 `WKInterfaceDevice.play` 震动。
+
+需要真机验证的地方：
+
+- 智能闹钟会话在 App 重启后拿不到之前安排的会话引用，新会话可能排不上；旧会话到点时会检查任务是否还需要提醒。
+- 后台刷新的时间由系统决定，可能晚于 `refreshBy`；默认每天至少续排一次，窗口为 7 天。
 
 ## TrainingCore
 
@@ -93,7 +116,7 @@ swift test
 
 ## 持续集成
 
-`.github/workflows/ci.yml`：每次推送到 main 或提交 PR 时：Linux 上运行 `swift test`；macOS（Xcode）上运行 TrainingCore 测试并编译 iOS 与 watchOS 模拟器版本；生成 Xcode 工程，在 iOS 模拟器上编译 App 并运行 App 测试。
+`.github/workflows/ci.yml`：每次推送到 main 或提交 PR 时：Linux 上运行 `swift test`；macOS（Xcode）上运行 TrainingCore 测试并编译 iOS 与 watchOS 模拟器版本；生成 Xcode 工程，在 iOS 模拟器上编译 iPhone App（含手表 App）并运行 App 测试，检查手表 App 已嵌入；在 watchOS 模拟器上运行手表 App 测试。
 
 ## 在 Linux 云端会话运行测试
 

@@ -64,6 +64,11 @@ jobs:
         run: |
           xcrun xcresulttool get test-results summary --path AppTests.xcresult --compact > summary.json
           python3 scripts/xcresult-summary.py summary.json
+      - name: 检查手表 App 已嵌入 iPhone App
+        run: |
+          WATCH=$(find ~/Library/Developer/Xcode/DerivedData -path "*/Debug-iphonesimulator/AITrainingPlanner.app/Watch/*.app" -maxdepth 8 -type d | head -1)
+          test -n "$WATCH" || { echo "iPhone App 里没有 Watch/ 目录"; exit 1; }
+          echo "已嵌入：$WATCH"
 
   watch:
     name: Watch App（watchOS 模拟器）

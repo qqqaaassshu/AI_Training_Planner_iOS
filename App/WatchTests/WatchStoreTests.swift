@@ -52,14 +52,15 @@ struct WatchStoreTests {
     @Test("通知内容：时效性、指纹、按时触发")
     func notificationRequest() throws {
         let p = try plan()
-        let now = p.startDate.date(atHour: 6, minute: 0, in: p.timeZone)!
-        let schedule = ReminderScheduler.schedule(plan: p, records: [], now: now)
+        // 示例计划从本周一开始，未来几天内一定有提醒
+        let schedule = ReminderScheduler.schedule(plan: p, records: [], now: Date())
         let first = try #require(schedule.notifications.first)
         let request = ReminderService.request(for: first)
         #expect(request.identifier == first.id)
         #expect(request.content.interruptionLevel == .timeSensitive)
         #expect(request.content.userInfo[ReminderRequest.fingerprintKey] as? String == first.fingerprint)
         let trigger = try #require(request.trigger as? UNCalendarNotificationTrigger)
-        #expect(trigger.nextTriggerDate() == first.fireDate)
+        #expect(first.fireDate > Date())
+        #expect(trigger.nextTriggerDate().map { abs($0.timeIntervalSince(first.fireDate)) < 1 } == true)
     }
 }

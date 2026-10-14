@@ -122,3 +122,20 @@ import Testing
         #expect(afterWorkout?.summary.nextTitle == "散步20分钟")
     }
 }
+
+@Suite("演示数据") struct DemoDataTests {
+    @Test("任何一天都有今天的任务、过去的记录、待处理分析与档案") func content() {
+        for today in [d("2026-10-14"), d("2026-10-18"), d("2027-01-01")] {
+            let s = DemoData.state(today: today, now: today.date(atHour: 9, minute: 0, in: .current)!)
+            #expect(s.planVersions.count == 2 && s.currentPlan?.version == 2)
+            #expect(s.currentPlan?.tasks(on: today).count == 3)
+            #expect(s.records.filter { $0.date < today }.count == 18)
+            #expect(s.records.record(taskId: "t2", date: today)?.status == .completed)
+            #expect(s.analyses.first?.status == .new)
+            #expect(s.analyses.first?.previewDiff(current: s.currentPlan, versions: s.planVersions)?.modified.first?.changes == ["深蹲：3×10 → 4×10"])
+            #expect(s.profileHistory.contains { $0.field == .weightKg && $0.to == .number(71) })
+            #expect(s.aiSettings.activeService?.preset == "anthropic")
+            #expect(detectAlerts(records: s.records, wellness: s.dailyWellness, today: today).isEmpty)
+        }
+    }
+}

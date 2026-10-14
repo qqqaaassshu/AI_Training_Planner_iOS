@@ -130,6 +130,31 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.aitrainingplanner.watchkitapp.tests
         GENERATE_INFOPLIST_FILE: YES
         SWIFT_VERSION: "5.0"
+  AITrainingPlannerUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - App/iPhoneUITests
+    dependencies:
+      - target: AITrainingPlanner
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.aitrainingplanner.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: AITrainingPlanner
+  AITrainingPlannerWatchUITests:
+    type: bundle.ui-testing
+    platform: watchOS
+    sources:
+      - App/WatchUITests
+    dependencies:
+      - target: AITrainingPlannerWatch
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.example.aitrainingplanner.watchkitapp.uitests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_TARGET_NAME: AITrainingPlannerWatch
+        SWIFT_VERSION: "5.0"
   AITrainingPlannerTests:
     type: bundle.unit-test
     platform: iOS
@@ -163,3 +188,20 @@ schemes:
       config: Debug
       targets:
         - AITrainingPlannerWatchTests
+  # 界面截图（演示数据），CI 导出为构建产物
+  Screenshots:
+    build:
+      targets:
+        AITrainingPlanner: all
+    test:
+      config: Debug
+      targets:
+        - AITrainingPlannerUITests
+  WatchScreenshots:
+    build:
+      targets:
+        AITrainingPlannerWatch: all
+    test:
+      config: Debug
+      targets:
+        - AITrainingPlannerWatchUITests

@@ -153,6 +153,12 @@ final class TrainingStore {
 
     func saveProfile(_ p: UserProfile) { mutate { $0.saveProfile(p) } }
 
+    /// 截图测试：填入演示数据
+    func loadDemoData() {
+        mutate { $0 = DemoData.state(today: today) }
+        setDraft(DemoData.draft, date: today, taskId: "t1")
+    }
+
     // MARK: 草稿
 
     static func draftKey(date: LocalDate, taskId: String) -> String { "\(date)|\(taskId)" }

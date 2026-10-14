@@ -7,7 +7,15 @@ import WatchKit
 @MainActor
 @Observable
 final class WatchAppModel {
-    static let shared = WatchAppModel()
+    static let shared = DemoData.isActive ? WatchAppModel.demo() : WatchAppModel()
+
+    /// 截图测试：临时文件 + 演示数据，不请求权限、不连接手机
+    static func demo() -> WatchAppModel {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("demo-\(UUID().uuidString).json")
+        let store = WatchStore(fileURL: url)
+        store.apply(DemoData.state(today: store.today).watchSnapshot(today: store.today))
+        return WatchAppModel(store: store)
+    }
 
     let store: WatchStore
     @ObservationIgnored let reminders = ReminderService()
@@ -36,6 +44,7 @@ final class WatchAppModel {
     private(set) var isAlarmRinging = false
 
     func launch() async {
+        guard !DemoData.isActive else { return }
         connectivity.activate()
         store.publishToWidgets()
         await reminders.requestAuthorization()
@@ -45,6 +54,7 @@ final class WatchAppModel {
 
     func becameActive() async {
         store.refreshToday()
+        guard !DemoData.isActive else { return }
         await reminders.refreshSettings()
         await rescheduleAll(foreground: true)
     }

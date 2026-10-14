@@ -97,3 +97,38 @@ jobs:
         run: |
           xcrun xcresulttool get test-results summary --path WatchTests.xcresult --compact > summary.json
           python3 scripts/xcresult-summary.py summary.json
+
+  screenshots:
+    name: 界面截图（演示数据）
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v5
+      - name: 生成 Xcode 工程
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: 选择模拟器
+        run: |
+          echo "IOS_UDID=$(xcrun simctl list devices available -j | python3 scripts/pick-simulator.py iOS iPhone)" >> "$GITHUB_ENV"
+          echo "WATCH_UDID=$(xcrun simctl list devices available -j | python3 scripts/pick-simulator.py watchOS "Apple Watch")" >> "$GITHUB_ENV"
+      - name: iPhone 截图
+        continue-on-error: true
+        run: |
+          xcodebuild test -project AITrainingPlanner.xcodeproj -scheme Screenshots \
+            -destination "id=$IOS_UDID" CODE_SIGNING_ALLOWED=NO -quiet -resultBundlePath iPhoneShots.xcresult
+      - name: 手表截图
+        continue-on-error: true
+        run: |
+          xcodebuild test -project AITrainingPlanner.xcodeproj -scheme WatchScreenshots \
+            -destination "id=$WATCH_UDID" CODE_SIGNING_ALLOWED=NO -quiet -resultBundlePath WatchShots.xcresult
+      - name: 导出截图
+        if: always()
+        run: |
+          python3 scripts/export-screenshots.py iPhoneShots.xcresult screenshots/iphone
+          python3 scripts/export-screenshots.py WatchShots.xcresult screenshots/watch
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: screenshots
+          if-no-files-found: warn

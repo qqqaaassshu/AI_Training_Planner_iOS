@@ -49,6 +49,7 @@ struct WatchTodayView: View {
                 } label: {
                     Image(systemName: "bell.badge")
                 }
+                .accessibilityLabel("提醒")
             }
         }
     }

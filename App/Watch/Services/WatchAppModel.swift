@@ -18,8 +18,8 @@ final class WatchAppModel {
     /// 让界面跟着提醒权限、强提醒状态刷新
     private(set) var revision = 0
 
-    init(store: WatchStore = WatchStore()) {
-        self.store = store
+    init(store: WatchStore? = nil) {
+        self.store = store ?? WatchStore()
         alarm.shouldRing = { [weak self] in self?.alarmStillNeeded() ?? false }
         alarm.onChange = { [weak self] in
             guard let self else { return }

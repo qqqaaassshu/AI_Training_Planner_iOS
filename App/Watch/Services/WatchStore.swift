@@ -28,7 +28,7 @@ final class WatchStore {
 
     @ObservationIgnored private let fileURL: URL
 
-    static var defaultURL: URL {
+    nonisolated static var defaultURL: URL {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
         return dir.appendingPathComponent("watch-data.json")
     }

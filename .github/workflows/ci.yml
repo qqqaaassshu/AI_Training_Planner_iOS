@@ -38,3 +38,32 @@ jobs:
         run: xcodebuild build -scheme TrainingCore -destination 'generic/platform=iOS Simulator' -quiet
       - name: 编译（watchOS 模拟器）
         run: xcodebuild build -scheme TrainingCore -destination 'generic/platform=watchOS Simulator' -quiet
+
+  iphone:
+    name: iPhone App（Xcode，iOS 模拟器）
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcodebuild -version
+      - name: 生成 Xcode 工程
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: 选择 iOS 模拟器
+        run: |
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          devices = json.load(sys.stdin)["devices"]
+          for runtime in sorted(devices, reverse=True):
+              if ".iOS-" in runtime:
+                  for d in devices[runtime]:
+                      if d["name"].startswith("iPhone"):
+                          print(d["udid"]); sys.exit()
+          ')
+          echo "使用模拟器 $UDID"
+          echo "SIM_UDID=$UDID" >> "$GITHUB_ENV"
+      - name: 编译并运行 App 测试
+        run: |
+          set -o pipefail
+          xcodebuild test -project AITrainingPlanner.xcodeproj -scheme AITrainingPlanner \
+            -destination "id=$SIM_UDID" CODE_SIGNING_ALLOWED=NO -quiet

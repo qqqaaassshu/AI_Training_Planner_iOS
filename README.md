@@ -8,19 +8,47 @@
 
 | 位置 | 内容 |
 |---|---|
+| `project.yml` | Xcode 工程配置（XcodeGen） |
+| `App/iPhone` | iPhone App（SwiftUI + SwiftData） |
+| `App/iPhoneTests` | App 测试（SwiftData 读写） |
 | `Packages/TrainingCore` | iPhone 与 Watch 共用的核心逻辑（Swift Package，无 UI 依赖，Linux 上可测试） |
 | `scripts/install-swift-linux.sh` | 在 Linux 云端会话安装 Swift 工具链 |
 
-App 工程（iPhone、Watch）在第 2、3 阶段加入，通过本地包依赖引用 `TrainingCore`。
+Watch App 在第 3 阶段加入。
 
 ## 阶段
 
 | 阶段 | 内容 | 状态 |
 |---|---|---|
 | 1 | `TrainingCore`：模型、日期、统计、版本对比、自然语言解析、校验、AI 提示词与服务适配、提醒排程逻辑，连同测试 | ✅ |
-| 2 | iPhone：导入计划、今日任务、逐个动作打勾、历史；SwiftData | |
+| 2 | iPhone：导入计划、今日任务、逐个动作打勾、历史；SwiftData | 进行中 |
 | 3 | Watch：逐组训练、休息倒计时、表冠、HKWorkoutSession、WatchConnectivity、三层提醒 | |
 | 4 | AI 分析、个人档案、通知操作（完成/稍后）、表盘复杂功能 | |
+
+## 在 Mac 上打开 iPhone App
+
+需要 Xcode 16 或更新版本。
+
+```
+brew install xcodegen      # 只需安装一次
+xcodegen generate          # 每次拉取代码后运行，生成 AITrainingPlanner.xcodeproj
+open AITrainingPlanner.xcodeproj
+```
+
+- 模拟器：选择任意 iPhone 模拟器，点运行即可。
+- 真机：在 Signing & Capabilities 里选择你的开发团队，并把 Bundle Identifier 改成自己的（例如 `com.你的名字.aitrainingplanner`）。
+
+Xcode 工程由 `project.yml` 生成，不提交到仓库；增删文件后重新运行 `xcodegen generate`。
+
+### iPhone App（第 2 阶段）
+
+| 页面 | 内容 |
+|---|---|
+| 今日 | 当天任务与完成进度、今日疲劳；任务详情里逐个动作打勾、调整实际组数/次数/时长/重量、疼痛评分与备注，然后完成（或保存进度）、延后、跳过（选原因）。中途退出会保存草稿 |
+| 记录 | 按日期列出执行记录与疲劳，顶部统计；点开可补录动作与备注，左滑删除 |
+| 计划 | 当前计划概要与任务；导入（粘贴 JSON 或自然语言、从文件导入、载入示例），导入前预览错误、未识别的行和相对当前版本的变化；版本历史，可查看每版变化并切换当前版本 |
+
+数据存储：SwiftData 里每条数据保存为 TrainingCore 模型的 JSON（与网页原型、AI、手表同步的格式相同），逻辑都在 TrainingCore（`Session/`）。
 
 ## TrainingCore
 
@@ -65,7 +93,7 @@ swift test
 
 ## 持续集成
 
-`.github/workflows/ci.yml`：每次推送到 main 或提交 PR 时，在 Linux 上运行 `swift test`，并在 macOS（Xcode）上运行测试、编译 iOS 与 watchOS 模拟器版本。
+`.github/workflows/ci.yml`：每次推送到 main 或提交 PR 时：Linux 上运行 `swift test`；macOS（Xcode）上运行 TrainingCore 测试并编译 iOS 与 watchOS 模拟器版本；生成 Xcode 工程，在 iOS 模拟器上编译 App 并运行 App 测试。
 
 ## 在 Linux 云端会话运行测试
 

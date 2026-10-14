@@ -27,11 +27,3 @@ func rec(_ taskId: String = "t1", _ date: String, _ status: RecordStatus, planVe
                            updatedAt: "\(date)T12:00:00Z")
 }
 
-/// 修改 JSONValue 对象的某个键
-extension JSONValue {
-    func with(_ key: String, _ value: JSONValue) -> JSONValue {
-        guard case .object(var o) = self else { return self }
-        o[key] = value
-        return .object(o)
-    }
-}

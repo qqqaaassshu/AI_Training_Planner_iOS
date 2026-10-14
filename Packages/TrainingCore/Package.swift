@@ -10,7 +10,11 @@ let package = Package(
     targets: [
         .target(
             name: "TrainingCore",
-            resources: [.copy("Resources/plan.schema.json"), .copy("Resources/ai-analysis.schema.json")]
+            resources: [
+                .copy("Resources/plan.schema.json"),
+                .copy("Resources/ai-analysis.schema.json"),
+                .copy("Resources/samplePlan.json"),
+            ]
         ),
         .testTarget(
             name: "TrainingCoreTests",

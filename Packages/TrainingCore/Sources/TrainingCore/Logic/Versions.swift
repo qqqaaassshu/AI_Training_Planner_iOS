@@ -146,3 +146,19 @@ public func comparePlanVersions(_ a: PlanVersion, _ b: PlanVersion) -> PlanDiff 
         .map { PlanDiff.TaskSummary(taskTitle: $0.title, exercises: $0.exercises?.map(\.name) ?? []) }
     return PlanDiff(added: added, removed: removed, modified: modified)
 }
+
+extension TaskSchedule {
+    /// “周一、周三、周五 07:30” / “每天 18:00”
+    public var summary: String { describeSchedule(self) }
+}
+
+extension PlanSource {
+    public var label: String {
+        switch self {
+        case .jsonImport: return "JSON 导入"
+        case .nlImport: return "自然语言导入"
+        case .aiAnalysis: return "AI 建议"
+        case .manual: return "手动"
+        }
+    }
+}

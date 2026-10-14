@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-training-planner/schema/ai-analysis.schema.json",
+  "title": "AIAnalysisOutput",
+  "description": "AI 对训练执行情况的分析结果。无论通过 API 返回还是手动粘贴回 App，都使用此格式。",
+  "type": "object",
+  "required": ["summary", "findings"],
+  "properties": {
+    "summary": { "type": "string", "minLength": 1, "description": "执行情况总结，2-4 句" },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["level", "text"],
+        "properties": {
+          "level": { "enum": ["info", "warn", "risk"], "description": "risk 表示需要停止或就医的风险" },
+          "text": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "suggested_plan": {
+      "$ref": "plan.schema.json",
+      "description": "建议的下一版计划（可选）。不需要调整时省略"
+    }
+  }
+}

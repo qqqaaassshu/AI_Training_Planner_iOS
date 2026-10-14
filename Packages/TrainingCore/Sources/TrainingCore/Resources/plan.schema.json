@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ai-training-planner/schema/plan.schema.json",
+  "title": "PlanInput",
+  "description": "训练计划（导入或 AI 生成）。版本号、创建时间等元数据由 App 分配，可省略。日期为本地日期 YYYY-MM-DD。",
+  "type": "object",
+  "required": ["plan_name", "start_date", "tasks"],
+  "properties": {
+    "schema_version": { "type": "string", "description": "数据格式版本，当前为 2.0" },
+    "plan_name": { "type": "string", "minLength": 1 },
+    "start_date": { "type": "string", "format": "date" },
+    "end_date": { "type": "string", "format": "date" },
+    "timezone": { "type": "string", "description": "IANA 时区，如 Asia/Shanghai" },
+    "ai_summary": { "type": "string", "description": "计划目标摘要" },
+    "change_note": { "type": "string", "description": "相对上一版的调整说明" },
+    "tasks": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/task" }
+    }
+  },
+  "$defs": {
+    "task": {
+      "type": "object",
+      "required": ["title", "type", "schedule"],
+      "properties": {
+        "id": { "type": "string", "description": "任务 id，跨版本保持不变。调整已有任务时请沿用原 id" },
+        "title": { "type": "string", "minLength": 1 },
+        "type": { "enum": ["workout", "habit"] },
+        "schedule": {
+          "type": "object",
+          "properties": {
+            "daily": { "type": "boolean" },
+            "weekday": {
+              "type": "array",
+              "items": { "type": "integer", "minimum": 0, "maximum": 6 },
+              "description": "0 = 周日 … 6 = 周六"
+            },
+            "time": { "type": "string", "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$" }
+          },
+          "anyOf": [
+            { "required": ["daily"], "properties": { "daily": { "const": true } } },
+            { "required": ["weekday"], "properties": { "weekday": { "type": "array", "minItems": 1 } } }
+          ]
+        },
+        "exercises": { "type": "array", "items": { "$ref": "#/$defs/exercise" } },
+        "phases": {
+          "type": "array",
+          "description": "按周渐进：第 week_from ~ week_to 周（含）用 exercises 覆盖默认动作",
+          "items": {
+            "type": "object",
+            "required": ["week_from", "week_to", "exercises"],
+            "properties": {
+              "week_from": { "type": "integer", "minimum": 1 },
+              "week_to": { "type": "integer", "minimum": 1 },
+              "exercises": { "type": "array", "items": { "$ref": "#/$defs/exercise" } }
+            }
+          }
+        },
+        "reminder": { "type": "boolean", "default": true }
+      }
+    },
+    "exercise": {
+      "type": "object",
+      "required": ["name", "sets"],
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string", "minLength": 1 },
+        "sets": { "type": "integer", "minimum": 1 },
+        "reps": { "type": "integer", "minimum": 1, "description": "每组次数，与 duration_sec 二选一" },
+        "duration_sec": { "type": "integer", "minimum": 1, "description": "每组时长（秒），与 reps 二选一" },
+        "weight_kg": { "type": "number", "minimum": 0 },
+        "rest_sec": { "type": "integer", "minimum": 0 },
+        "cue": { "type": "string", "description": "动作要点" }
+      },
+      "anyOf": [{ "required": ["reps"] }, { "required": ["duration_sec"] }]
+    }
+  }
+}

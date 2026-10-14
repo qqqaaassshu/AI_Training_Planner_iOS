@@ -19,7 +19,7 @@ jobs:
       run:
         working-directory: Packages/TrainingCore
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: swift --version
       - run: swift test
 
@@ -30,7 +30,7 @@ jobs:
       run:
         working-directory: Packages/TrainingCore
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: xcodebuild -version && swift --version
       - name: 测试（macOS）
         run: swift test
@@ -43,7 +43,7 @@ jobs:
     name: iPhone App（Xcode，iOS 模拟器）
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: xcodebuild -version
       - name: 生成 Xcode 工程
         run: |
@@ -66,4 +66,9 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test -project AITrainingPlanner.xcodeproj -scheme AITrainingPlanner \
-            -destination "id=$SIM_UDID" CODE_SIGNING_ALLOWED=NO -quiet
+            -destination "id=$SIM_UDID" CODE_SIGNING_ALLOWED=NO -quiet -resultBundlePath AppTests.xcresult
+      - name: 测试结果
+        if: always()
+        run: |
+          xcrun xcresulttool get test-results summary --path AppTests.xcresult --compact > summary.json
+          python3 scripts/xcresult-summary.py summary.json

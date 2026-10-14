@@ -142,6 +142,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.aitrainingplanner.uitests
         GENERATE_INFOPLIST_FILE: YES
         TEST_TARGET_NAME: AITrainingPlanner
+        # XCUITest 的 API 都要求主线程，测试代码用 Swift 5 语言模式
+        SWIFT_VERSION: "5.0"
   AITrainingPlannerWatchUITests:
     type: bundle.ui-testing
     platform: watchOS

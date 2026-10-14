@@ -23,15 +23,10 @@ private struct SetView: View {
     var body: some View {
         let ex = progress.current
         VStack(spacing: 4) {
-            HStack {
-                Text("动作 \(progress.exerciseIndex + 1)/\(progress.exercises.count)")
-                Spacer()
-                Text("组 \(progress.setIndex)/\(ex?.sets ?? 0)")
-            }
-            .font(.caption2.monospacedDigit())
-            .foregroundStyle(.secondary)
-
             Text(ex?.name ?? "").font(.headline).lineLimit(2).multilineTextAlignment(.center)
+            Text("第 \(progress.setIndex)/\(ex?.sets ?? 0) 组 · 动作 \(progress.exerciseIndex + 1)/\(progress.exercises.count)")
+                .font(.caption2.monospacedDigit())
+                .foregroundStyle(.secondary)
             HStack {
                 Button { model.adjustWorkout(steps: -1) } label: { Image(systemName: "minus") }
                     .buttonStyle(.bordered).frame(width: 36)

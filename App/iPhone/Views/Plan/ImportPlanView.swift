@@ -22,7 +22,7 @@ struct ImportPlanView: View {
                     .pickerStyle(.segmented)
                     TextEditor(text: $text)
                         .font(mode == .json ? .system(.footnote, design: .monospaced) : .body)
-                        .frame(minHeight: 220)
+                        .frame(height: 220)
                         .autocorrectionDisabled()
                         .textInputAutocapitalization(.never)
                         .overlay(alignment: .topLeading) {

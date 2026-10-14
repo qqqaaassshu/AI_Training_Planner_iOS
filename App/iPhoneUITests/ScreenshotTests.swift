@@ -35,15 +35,16 @@ final class ScreenshotTests: XCTestCase {
 
         tap(app.buttons["导入"])
         tap(app.buttons["载入示例"])
-        app.swipeUp()
+        dragUp()
         snap("08-导入预览")
         tap(app.buttons["取消"])
 
         tap(app.tabBars.buttons["AI"])
         snap("09-AI")
-        tap(app.staticTexts["每周复盘"])
+        // “每周复盘”也是分析类型选择器里的选项，点分析摘要进入详情
+        tap(app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "近 7 天完成")))
         snap("10-分析详情")
-        app.swipeUp()
+        dragUp()
         snap("11-分析详情-建议")
         back()
 
@@ -61,6 +62,12 @@ final class ScreenshotTests: XCTestCase {
         } else {
             XCTFail("找不到 \(element)", file: file, line: line)
         }
+    }
+
+    /// 从屏幕下方往上拖（避开顶部的文本框）
+    private func dragUp() {
+        let from = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85))
+        from.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.25)))
     }
 
     private func back() {

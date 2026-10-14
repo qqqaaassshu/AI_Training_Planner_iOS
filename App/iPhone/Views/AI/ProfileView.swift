@@ -10,7 +10,9 @@ struct ProfileView: View {
     var body: some View {
         Form {
             Section("基本信息") {
-                TextField("年龄段，例如 30-39", text: text(\.ageRange))
+                LabeledContent("年龄段") {
+                    TextField("例如 30-39", text: text(\.ageRange)).multilineTextAlignment(.trailing)
+                }
                 Picker("性别", selection: $profile.sex) {
                     Text("未填写").tag(Sex?.none)
                     ForEach(Sex.allCases, id: \.self) { Text($0.label).tag(Sex?.some($0)) }
@@ -23,13 +25,13 @@ struct ProfileView: View {
                 }
             }
             Section("训练条件") {
-                TextField("伤病与身体限制，例如“右手腕恢复中，避免支撑”", text: text(\.injuries), axis: .vertical)
-                TextField("可训练时间，例如“工作日晚上 20 分钟”", text: text(\.availableTime), axis: .vertical)
-                TextField("可用器械，例如“弹力带、10kg 哑铃”", text: text(\.equipment), axis: .vertical)
+                field("伤病与身体限制", "例如“右手腕恢复中，避免支撑”", \.injuries)
+                field("可训练时间", "例如“工作日晚上 20 分钟”", \.availableTime)
+                field("可用器械", "例如“弹力带、10kg 哑铃”", \.equipment)
             }
             Section("目标与偏好") {
-                TextField("目标", text: text(\.goals), axis: .vertical)
-                TextField("偏好与其他（喜欢/不喜欢的动作等）", text: text(\.preferences), axis: .vertical)
+                field("目标", "例如“睡好，恢复体能”", \.goals)
+                field("偏好与其他", "喜欢或不喜欢的动作等", \.preferences)
             }
             Section {
                 Button("保存") { store.saveProfile(profile) }
@@ -53,6 +55,14 @@ struct ProfileView: View {
             guard !loaded else { return }
             loaded = true
             profile = store.state.profile
+        }
+    }
+
+    /// 多行文字字段：上方小标题，下方输入
+    private func field(_ title: String, _ prompt: String, _ key: WritableKeyPath<UserProfile, String?>) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title).font(.caption).foregroundStyle(.secondary)
+            TextField(prompt, text: text(key), axis: .vertical)
         }
     }
 

@@ -29,6 +29,9 @@ for test in manifest:
         m = re.match(r"^(.*?)_\d+_[0-9A-Fa-f-]{8,}(\.\w+)$", name)
         if m:
             name = m.group(1) + m.group(2)
+        # 只要测试里命名的截图（例如 01-今日、w01-今日），跳过失败时自动附带的录屏与界面层级
+        if not re.match(r"^w?\d{2}-.+\.png$", name):
+            continue
         shutil.copy(os.path.join(tmp, exported), os.path.join(out, name))
         count += 1
 print("导出 {} 张截图到 {}".format(count, out))

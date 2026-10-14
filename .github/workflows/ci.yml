@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  linux:
+    name: TrainingCore · Linux
+    runs-on: ubuntu-latest
+    container: swift:6.1-noble
+    defaults:
+      run:
+        working-directory: Packages/TrainingCore
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift --version
+      - run: swift test
+
+  apple:
+    name: TrainingCore · Xcode（macOS / iOS / watchOS）
+    runs-on: macos-15
+    defaults:
+      run:
+        working-directory: Packages/TrainingCore
+    steps:
+      - uses: actions/checkout@v4
+      - run: xcodebuild -version && swift --version
+      - name: 测试（macOS）
+        run: swift test
+      - name: 编译（iOS 模拟器）
+        run: xcodebuild build -scheme TrainingCore -destination 'generic/platform=iOS Simulator' -quiet
+      - name: 编译（watchOS 模拟器）
+        run: xcodebuild build -scheme TrainingCore -destination 'generic/platform=watchOS Simulator' -quiet

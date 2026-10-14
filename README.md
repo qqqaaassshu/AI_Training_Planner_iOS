@@ -63,6 +63,10 @@ swift test
 
 `ReminderScheduler.diff(desired:pending:)` 对比系统里已有的待发通知，只移除不再需要的、只添加新增或内容变化的，且不碰其他 id 的通知。
 
+## 持续集成
+
+`.github/workflows/ci.yml`：每次推送到 main 或提交 PR 时，在 Linux 上运行 `swift test`，并在 macOS（Xcode）上运行测试、编译 iOS 与 watchOS 模拟器版本。
+
 ## 在 Linux 云端会话运行测试
 
 ```

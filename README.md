@@ -27,22 +27,28 @@
 | 3 | Watch：逐组训练、休息倒计时、表冠、HKWorkoutSession、WatchConnectivity、三层提醒 | 代码完成，待真机验证 |
 | 4 | AI 分析、个人档案、通知操作（完成/稍后）、表盘复杂功能 | 代码完成，待真机验证 |
 
-## 在 Mac 上打开 iPhone App
+## 在 Mac 上安装到 iPhone 与 Apple Watch
 
-需要 Xcode 16 或更新版本。
+需要 Xcode 16 或更新版本（不需要下载模拟器）。
 
 ```
-brew install xcodegen      # 只需安装一次
-xcodegen generate          # 每次拉取代码后运行，生成 AITrainingPlanner.xcodeproj
+git clone https://github.com/qqqaaassshu/AI_Training_Planner_iOS.git
+cd AI_Training_Planner_iOS
+brew install xcodegen                 # 只需一次
+cp local.env.example local.env        # 只需一次，然后编辑 local.env
+scripts/generate.sh                   # 每次拉取代码后运行
 open AITrainingPlanner.xcodeproj
 ```
 
-- 模拟器：选择任意 iPhone 模拟器，点运行即可。
-- 真机：在 iPhone 与 Watch 两个 target 的 Signing & Capabilities 里选择你的开发团队，并把 Bundle Identifier 改成自己的：iPhone 为 `com.你的名字.aitrainingplanner`，Watch 为 `com.你的名字.aitrainingplanner.watchkitapp`，同时把 `project.yml` 里 `WKCompanionAppBundleIdentifier` 改成 iPhone 的标识。
-- 手表 App 与表盘复杂功能通过 App Group 共享数据：把 `group.com.example.aitrainingplanner`（`project.yml` 与 `App/Watch/Services/WidgetShared.swift`）改成自己的组，并在两个 target 的 App Groups 能力里勾选；表盘扩展的 Bundle Identifier 为 `<手表 App 的标识>.widgets`。
-- 手表 App 用到 HealthKit 与时效性通知（Time Sensitive Notifications）能力；个人免费账号可能无法签名其中某些能力，遇到签名错误时把报错发给我。
+`local.env`（不提交到仓库）：
 
-Xcode 工程由 `project.yml` 生成，不提交到仓库；增删文件后重新运行 `xcodegen generate`。
+| 项 | 说明 |
+|---|---|
+| `BUNDLE_PREFIX` | 你自己的标识前缀，必须全球唯一，例如 `com.zhangsan2026` |
+| `DEVELOPMENT_TEAM` | 开发团队 ID；第一次可以留空，在 Xcode 里选好团队后从 Build Settings 复制过来，之后重新生成就不用再选 |
+| `FREE_ACCOUNT` | 免费 Apple ID 填 `YES`：去掉时效性通知与 App Group（提醒变成普通通知；表盘复杂功能显示为空），其余功能不受影响 |
+
+免费 Apple ID 装到真机的 App 7 天后失效，需要用 Xcode 重新运行一次（数据保留）。
 
 ### iPhone App（第 2 阶段）
 

@@ -14,3 +14,5 @@ App/Watch/Info.plist
 App/Watch/Watch.entitlements
 App/WatchWidgets/Info.plist
 App/WatchWidgets/WatchWidgets.entitlements
+
+local.env

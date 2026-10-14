@@ -1,0 +1,17 @@
+# 需要付费开发者账号（或免费账号无法签名）的能力。
+# FREE_ACCOUNT=YES 时 scripts/generate.sh 不引入本文件，App 会自动退化：
+# - 没有时效性通知：提醒变成普通通知，勿扰/专注模式下可能被压制
+# - 没有 App Group：表盘复杂功能读不到手表 App 的数据，显示为空
+targets:
+  AITrainingPlannerWatch:
+    entitlements:
+      properties:
+        com.apple.developer.usernotifications.time-sensitive: true
+        com.apple.security.application-groups:
+          - group.${BUNDLE_PREFIX}.aitrainingplanner
+  AITrainingPlannerWatchWidgets:
+    entitlements:
+      path: App/WatchWidgets/WatchWidgets.entitlements
+      properties:
+        com.apple.security.application-groups:
+          - group.${BUNDLE_PREFIX}.aitrainingplanner

@@ -13,6 +13,7 @@
 | `App/iPhoneTests` | App 测试（SwiftData 读写） |
 | `App/Watch` | Watch App（随 iPhone App 一起安装） |
 | `App/WatchTests` | 手表 App 测试 |
+| `App/WatchWidgets` | 表盘复杂功能（WidgetKit 扩展，随手表 App 安装） |
 | `Packages/TrainingCore` | iPhone 与 Watch 共用的核心逻辑（Swift Package，无 UI 依赖，Linux 上可测试） |
 | `scripts/install-swift-linux.sh` | 在 Linux 云端会话安装 Swift 工具链 |
 
@@ -24,7 +25,7 @@
 | 1 | `TrainingCore`：模型、日期、统计、版本对比、自然语言解析、校验、AI 提示词与服务适配、提醒排程逻辑，连同测试 | ✅ |
 | 2 | iPhone：导入计划、今日任务、逐个动作打勾、历史；SwiftData | 代码完成，待在 Mac 上试用 |
 | 3 | Watch：逐组训练、休息倒计时、表冠、HKWorkoutSession、WatchConnectivity、三层提醒 | 代码完成，待真机验证 |
-| 4 | AI 分析、个人档案、通知操作（完成/稍后）、表盘复杂功能 | |
+| 4 | AI 分析、个人档案、通知操作（完成/稍后）、表盘复杂功能 | 代码完成，待真机验证 |
 
 ## 在 Mac 上打开 iPhone App
 
@@ -38,6 +39,7 @@ open AITrainingPlanner.xcodeproj
 
 - 模拟器：选择任意 iPhone 模拟器，点运行即可。
 - 真机：在 iPhone 与 Watch 两个 target 的 Signing & Capabilities 里选择你的开发团队，并把 Bundle Identifier 改成自己的：iPhone 为 `com.你的名字.aitrainingplanner`，Watch 为 `com.你的名字.aitrainingplanner.watchkitapp`，同时把 `project.yml` 里 `WKCompanionAppBundleIdentifier` 改成 iPhone 的标识。
+- 手表 App 与表盘复杂功能通过 App Group 共享数据：把 `group.com.example.aitrainingplanner`（`project.yml` 与 `App/Watch/Services/WidgetShared.swift`）改成自己的组，并在两个 target 的 App Groups 能力里勾选；表盘扩展的 Bundle Identifier 为 `<手表 App 的标识>.widgets`。
 - 手表 App 用到 HealthKit 与时效性通知（Time Sensitive Notifications）能力；个人免费账号可能无法签名其中某些能力，遇到签名错误时把报错发给我。
 
 Xcode 工程由 `project.yml` 生成，不提交到仓库；增删文件后重新运行 `xcodegen generate`。
@@ -72,6 +74,16 @@ Xcode 工程由 `project.yml` 生成，不提交到仓库；增删文件后重�
 
 - 智能闹钟会话在 App 重启后拿不到之前安排的会话引用，新会话可能排不上；旧会话到点时会检查任务是否还需要提醒。
 - 后台刷新的时间由系统决定，可能晚于 `refreshBy`；默认每天至少续排一次，窗口为 7 天。
+
+### 第 4 阶段
+
+| 位置 | 内容 |
+|---|---|
+| iPhone · AI 页 | 本地安全提醒（不依赖 AI）；选分析类型、填补充说明，通过当前服务分析（首次需同意上传数据），或复制提示词给任意 AI 再粘贴回复；分析详情显示总结、发现与建议计划的变化，接受后生成新版本（来源 AI 建议） |
+| iPhone · AI 设置 | 多个服务（Anthropic、OpenAI、DeepSeek、通义千问、Kimi、智谱、豆包、Ollama、自定义），API Key 存钥匙串，测试连接；数据上传同意；每周自动复盘（距上次满 7 天时打开 App 自动运行） |
+| iPhone · 个人档案 | 写入 AI 系统提示词；每次保存记录变化 |
+| Watch · 通知操作 | 训练提醒“开始训练 / 稍后 10 分钟”，习惯提醒“完成 / 稍后 10 分钟”，不用打开 App |
+| Watch · 表盘复杂功能 | 圆形、矩形、行内、角落四种样式：今日进度与下一个任务；到点后切换到下一个，午夜换天 |
 
 ## TrainingCore
 

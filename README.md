@@ -16,6 +16,7 @@
 | `App/WatchWidgets` | 表盘复杂功能（WidgetKit 扩展，随手表 App 安装） |
 | `Packages/TrainingCore` | iPhone 与 Watch 共用的核心逻辑（Swift Package，无 UI 依赖，Linux 上可测试） |
 | `scripts/install-swift-linux.sh` | 在 Linux 云端会话安装 Swift 工具链 |
+| `scripts/clean-xcode.sh` | 在 Mac 上清理 Xcode 缓存与没用的设备数据 |
 
 
 ## 阶段
@@ -49,6 +50,13 @@ open AITrainingPlanner.xcodeproj
 | `FREE_ACCOUNT` | 免费 Apple ID 填 `YES`：去掉时效性通知与 App Group（提醒变成普通通知；表盘复杂功能显示为空），其余功能不受影响 |
 
 免费 Apple ID 装到真机的 App 7 天后失效，需要用 Xcode 重新运行一次（数据保留）。
+
+编译出现莫名错误或磁盘不够时，清理 Xcode 缓存（编译缓存、失效的模拟器、旧系统版本的真机调试符号）：
+
+```
+scripts/clean-xcode.sh              # 先列出要删的内容和大小，确认后删除
+scripts/clean-xcode.sh --runtimes   # 同时删除 30 天没用过的模拟器系统
+```
 
 ### iPhone App（第 2 阶段）
 
